@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Reserva Online Mesa Salón</title>
+
+  <!-- Estilos (look iOS 7 / tipo Apple) -->
+  <style>
+    :root{
+      --bg:#f6f7f9;
+      --card:#ffffffcc;
+      --text:#0b0c0e;
+      --muted:#5b5f67;
+      --tint:#007aff;       /* iOS blue */
+      --ok:#34c759;         /* iOS green */
+      --danger:#ff3b30;     /* iOS red */
+      --shadow:0 10px 30px rgba(0,0,0,.08);
+      --radius:16px;
+      --glass:blur(20px) saturate(140%);
+      --maxw:1100px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"SF Pro Text","SF Pro Icons";
+      color:var(--text);
+      background: linear-gradient(180deg, #fdfefe 0%, #f6f7f9 60%, #eef1f6 100%);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .wrap{max-width:var(--maxw); margin:0 auto; padding:16px}
+
+    /* Header app */
+    header.app{
+      position:sticky; top:0; z-index:100;
+      backdrop-filter:var(--glass);
+      background:rgba(255,255,255,.7);
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px; padding:12px 16px;
+    }
+    .brand .dot{width:12px; height:12px; border-radius:50%; background:var(--tint)}
+    .brand h1{margin:0; font-size:16px; font-weight:700; letter-spacing:.02em; color:#1c1c1e}
+
+    /* Hero (sin esquinas redondeadas, a todo ancho) */
+    .hero{
+      width:100%;
+      height:38vh;
+      min-height:240px;
+      max-height:420px;
+      position:relative;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+    }
+    .hero img{
+      width:100%; height:100%; object-fit:cover; display:block;
+      filter:saturate(108%);
+    }
+    .hero .overlay{
+      position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.4) 100%);
+    }
+    /* Título centrado exacto en la hero (vertical y horizontal) */
+    .hero .title{
+      position:absolute;
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      margin:0;
+      color:#fff;
+      text-shadow:0 8px 30px rgba(0,0,0,.35);
+      font-size: clamp(28px, 6vw, 56px);
+      font-weight:800;
+      letter-spacing:.02em;
+      line-height:1.1;
+      text-align:center;
+      padding:0 12px;
+    }
+
+    /* Grid */
+    .grid{display:grid; gap:16px; grid-template-columns:1fr}
+    @media (min-width: 900px){ .grid{grid-template-columns:1.2fr .8fr} }
+
+    /* Cards / Panels */
+    .card{
+      background:var(--card);
+      backdrop-filter:var(--glass);
+      border:1px solid rgba(0,0,0,.06);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .card h2{margin:0 0 12px 0; font-size:18px; font-weight:800}
+    .muted{color:var(--muted)}
+    .section{margin-top:18px}
+
+    /* Auth */
+    .auth{
+      min-height:100vh; display:grid; place-items:center; padding:24px;
+      background:
+        radial-gradient(800px 400px at 10% 10%, #ffffff 0%, #f3f6ff 70%, transparent 80%),
+        radial-gradient(700px 500px at 90% -10%, #ebfff2 0%, transparent 70%),
+        var(--bg);
+    }
+    .auth .panel{
+      width:min(92vw, 460px);
+      background:var(--card);
+      border:1px solid rgba(0,0,0,.06);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      padding:22px;
+    }
+    .panel h1{margin:0 0 6px 0; font-size:22px; font-weight:800}
+    .panel p{margin:0 0 14px 0}
+    .field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px}
+    .field label{font-size:13px; color:#3a3a3c}
+    .field input{
+      border:1px solid rgba(0,0,0,.12); background:#fff; border-radius:14px; padding:12px 14px; font-size:15px; outline:none;
+    }
+    .field input:focus{border-color:var(--tint); box-shadow:0 0 0 6px rgba(0,122,255,.12)}
+    .actions{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; flex-wrap:wrap}
+    .btn{
+      border:none; border-radius:14px; padding:12px 16px; cursor:pointer;
+      font-weight:700; letter-spacing:.01em;
+    }
+    .btn.primary{background:var(--tint); color:#fff; box-shadow:0 8px 20px rgba(0,122,255,.2)}
+    .btn.ghost{background:#fff; color:var(--tint); border:1px solid rgba(0,122,255,.3)}
+    .btn.text{background:transparent; color:var(--tint); padding:8px 10px}
+    .link{color:var(--tint); text-decoration:none; font-weight:700}
+    .error{color:var(--danger); font-size:13px; margin-top:8px}
+    .success{color:var(--ok); font-size:13px; margin-top:8px}
+
+    /* Booking controls */
+    .inline{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+    .slots{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
+    .chip{
+      border:1px solid rgba(0,0,0,.08); background:#fff; color:#111;
+      padding:10px 14px; border-radius:999px; cursor:pointer; user-select:none;
+      font-weight:700; letter-spacing:.01em;
+    }
+    .chip[data-selected="true"]{background:var(--tint); color:#fff; border-color:transparent}
+    .chip[aria-disabled="true"]{opacity:.45; cursor:not-allowed; text-decoration:line-through}
+    .help{font-size:13px; color:var(--muted)}
+
+    /* Calendar (FullCalendar tweaks) */
+    .fc{--fc-border-color: rgba(0,0,0,.06); --fc-page-bg-color: transparent; --fc-neutral-bg-color:#fff}
+    .fc .fc-toolbar-title{font-size:18px}
+    .fc .fc-button{
+      background:#fff; color:#111; border:1px solid rgba(0,0,0,.12); border-radius:12px; padding:6px 10px;
+    }
+    .fc .fc-button-primary:not(:disabled):active, .fc .fc-button-primary:focus{box-shadow:0 0 0 6px rgba(0,122,255,.12)}
+    .fc .fc-daygrid-event{border-radius:10px; padding:2px 6px}
+
+    /* Lists */
+    .list{display:flex; flex-direction:column; gap:10px}
+    .list .row{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border:1px solid rgba(0,0,0,.06); border-radius:12px; padding:10px 12px;
+    }
+
+    /* Footer oculto */
+    footer{display:none}
+  </style>
+
+  <!-- FullCalendar desde CDN (jsDelivr) -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales-all.global.min.js"></script>
+
+  <!-- Firebase SDKs desde CDN (gstatic) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <!-- PANTALLA DE AUTENTICACIÓN -->
+  <section id="auth" class="auth">
+    <div class="panel">
+      <h1>Accede a tu cuenta</h1>
+      <p class="muted">Reserva la mesa del salón en tiempo real.</p>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="tu@email.com" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+
+      <div class="actions">
+        <button id="btnLogin" class="btn primary" type="button">Entrar</button>
+        <a id="linkRegister" href="#" class="link">Crear cuenta</a>
+        <a id="linkReset" href="#" class="link">¿Olvidaste la contraseña?</a>
+      </div>
+
+      <div id="authMsg" class="section"></div>
+
+      <!-- Panel registro (ligero) -->
+      <div id="registerPanel" class="section" style="display:none">
+        <hr style="border:none; border-top:1px solid rgba(0,0,0,.08); margin:10px 0">
+        <p class="muted">Crea tu cuenta. Te enviaremos un email para verificarla.</p>
+        <div class="actions">
+          <button id="btnRegister" class="btn ghost" type="button">Registrar y enviar verificación</button>
+          <button id="btnCloseRegister" class="btn text" type="button">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APLICACIÓN -->
+  <header class="app" id="appHeader" style="display:none">
+    <div class="brand wrap">
+      <div class="dot"></div>
+      <h1>RESERVA ONLINE MESA SALÓN</h1>
+      <div style="margin-left:auto; display:flex; gap:10px; align-items:center">
+        <span id="userEmail" class="muted" style="font-size:13px"></span>
+        <button id="btnLogout" class="btn" type="button">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="appMain" style="display:none">
+    <!-- Sección hero a todo ancho con imagen local -->
+    <div class="hero">
+      <img src="img/mesa-salon.png" alt="Mesa del salón" />
+      <div class="overlay"></div>
+      <h2 class="title">RESERVA ONLINE MESA SALÓN</h2>
+    </div>
+
+    <div class="wrap section">
+      <div class="grid">
+        <!-- Calendario -->
+        <div class="card">
+          <h2>Calendario de disponibilidad</h2>
+          <p class="muted">Consulta las reservas confirmadas. Las actualizaciones son en tiempo real.</p>
+          <div id="calendar" class="section"></div>
+        </div>
+
+        <!-- Controles de reserva -->
+        <div class="card">
+          <h2>Haz tu reserva</h2>
+          <p class="help">1) Elige la fecha. 2) Selecciona una franja de 30 minutos. 3) Confirma.</p>
+
+          <div class="section">
+            <div class="field">
+              <label for="date">Fecha</label>
+              <input id="date" type="date" />
+            </div>
+
+            <div class="field">
+              <label>Franja horaria</label>
+              <div id="slots" class="slots"></div>
+              <p id="slotHelp" class="help"></p>
+            </div>
+
+            <div class="inline">
+              <button id="btnBook" class="btn primary" type="button">Confirmar reserva</button>
+              <span id="bookMsg" class="help"></span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Tus reservas</h2>
+            <div id="myBookings" class="list muted">No tienes reservas todavía.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instrucciones claras -->
+      <div class="card section">
+        <h2>Cómo usar esta aplicación</h2>
+        <ul class="muted" style="margin:0; padding-left:18px; line-height:1.6">
+          <li>Accede con tu email y contraseña. Si no tienes cuenta, crea una y verifica tu email desde el enlace que te enviamos.</li>
+          <li>Elige una fecha y una franja de 30 minutos entre 09:00 y 22:30.</li>
+          <li>Pulsa “Confirmar reserva”. La franja quedará bloqueada al instante para todos los usuarios.</li>
+          <li>Puedes cancelar tus reservas en la lista “Tus reservas”.</li>
+          <li>Límite: 1 reserva por día por usuario.</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer oculto -->
+  <footer></footer>
+
+  <script>
+    // ==== Firebase (tu configuración) ====
+    const firebaseConfig = {
+      apiKey: "AIzaSyCz5J2CoPNeLZ5k79b_Nae8gxSGF8G4R4Q",
+      authDomain: "reservamesasalon.firebaseapp.com",
+      databaseURL: "https://reservamesasalon-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "reservamesasalon",
+      storageBucket: "reservamesasalon.firebasestorage.app",
+      messagingSenderId: "730231578561",
+      appId: "1:730231578561:web:cbdef71bda17af70721940",
+      measurementId: "G-KVP01MM9RZ"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db   = firebase.database();
+
+    // ==== Utilidades ====
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const todayISO = () => new Date().toISOString().slice(0,10);
+    const pad2 = n => String(n).padStart(2,'0');
+
+    // Generar franjas cada 30 minutos desde 09:00 hasta 22:30 (última franja 22:00–22:30)
+    const SLOT_STARTS = [];
+    for(let h=9; h<=22; h++){
+      for(let m=0; m<60; m+=30){
+        if(h===22 && m>0) break; // 22:00 es la última de 30 min
+        SLOT_STARTS.push(`${pad2(h)}:${pad2(m)}`);
+      }
+    }
+    function formatSlotLabel(start){
+      const [h,m] = start.split(':').map(Number);
+      const end = new Date(0,0,0,h,m+30);
+      return `${start}–${pad2(end.getHours())}:${pad2(end.getMinutes())}`;
+    }
+
+    // ==== Estado app ====
+    const authSection = $('#auth');
+    const appHeader = $('#appHeader');
+    const appMain = $('#appMain');
+    const authMsg = $('#authMsg');
+    const registerPanel = $('#registerPanel');
+    const userEmail = $('#userEmail');
+
+    let calendar = null;
+    let currentUser = null;
+    let reservationsRef = null; // /reservations
+    let reservationsCache = {}; // { "YYYY-MM-DD": { "HH:MM": {uid, email, createdAt} } }
+    let selectedSlot = null;
+
+    // ==== Auth UI ====
+    $('#btnLogin').addEventListener('click', async () => {
+      const email = $('#email').value.trim();
+      const pass = $('#password').value;
+      authMsg.textContent = '';
+      try{
+        const cred = await auth.signInWithEmailAndPassword(email, pass);
+        if(!cred.user.emailVerified){
+          await auth.signOut();
+          showAuthInfo('Debes verificar tu email antes de entrar. Revisa tu bandeja o solicita reenvío.', true, true);
+        }
+      }catch(e){ authError(e); }
+    });
+
+    $('#linkRegister').addEventListener('click', e => {
+      e.preventDefault();
+      registerPanel.style.display = 'block';
+    });
+    $('#btnCloseRegister').addEventListener('click', () => {
+      registerPanel.style.display = 'none';
+    });
+
+    $('#btnRegister').addEventListener('click', async () => {
+      const email = $('#email').value.trim();
+      const pass = $('#password').value;
+      authMsg.textContent = '';
+      if(pass.length < 6){
+        showAuthInfo('La contraseña debe tener al menos 6 caracteres.', true);
+        return;
+      }
+      try{
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        await cred.user.sendEmailVerification();
+        await auth.signOut();
+        registerPanel.style.display = 'none';
+        showAuthInfo('Cuenta creada. Te enviamos un email de verificación. Verifica para poder acceder.', false);
+      }catch(e){ authError(e); }
+    });
+
+    $('#linkReset').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const email = $('#email').value.trim();
+      if(!email){ showAuthInfo('Introduce tu email para enviarte el enlace de restablecimiento.', true); return; }
+      try{
+        await auth.sendPasswordResetEmail(email);
+        showAuthInfo('Te hemos enviado un email para restablecer la contraseña.');
+      }catch(e){ authError(e); }
+    });
+
+    function addResendVerificationLink(email){
+      // Evita crear botones duplicados
+      if (authMsg.querySelector('[data-resend]')) return;
+      const link = document.createElement('button');
+      link.className = 'btn text';
+      link.textContent = 'Reenviar verificación';
+      link.setAttribute('data-resend','true');
+      link.onclick = async () => {
+        try{
+          // Si hay contraseña escrita, la usamos para crear sesión temporal y reenviar verificación
+          const pwd = $('#password').value;
+          if(!pwd){
+            showAuthInfo('Escribe tu contraseña y vuelve a pulsar “Reenviar verificación”.', true);
+            return;
+          }
+          await auth.signInWithEmailAndPassword(email, pwd);
+          if(auth.currentUser && !auth.currentUser.emailVerified){
+            await auth.currentUser.sendEmailVerification();
+            showAuthInfo('Verificación reenviada. Revisa tu bandeja (incluye spam).');
+          }
+          await auth.signOut();
+        }catch(e){ authError(e); }
+      };
+      authMsg.appendChild(document.createElement('br'));
+      authMsg.appendChild(link);
+    }
+
+    $('#btnLogout').addEventListener('click', () => auth.signOut());
+
+    auth.onAuthStateChanged(user => {
+      if(user && user.emailVerified){
+        currentUser = user;
+        userEmail.textContent = user.email || '';
+        authSection.style.display='none';
+        appHeader.style.display='block';
+        appMain.style.display='block';
+        initApp();
+      }else{
+        teardownApp();
+        authSection.style.display='grid';
+        appHeader.style.display='none';
+        appMain.style.display='none';
+      }
+    });
+
+    function showAuthInfo(text, isError=false, showResend=false){
+      authMsg.className = isError ? 'error' : 'success';
+      authMsg.textContent = text;
+      if(showResend){
+        addResendVerificationLink($('#email').value.trim());
+      }
+    }
+    function authError(e){
+      const msg = mapAuthError(e);
+      showAuthInfo(msg, true);
+    }
+    function mapAuthError(e){
+      const code = e?.code || '';
+      if(code.includes('auth/invalid-email')) return 'Email inválido.';
+      if(code.includes('auth/user-not-found')) return 'No existe una cuenta con ese email.';
+      if(code.includes('auth/wrong-password')) return 'Contraseña incorrecta.';
+      if(code.includes('auth/email-already-in-use')) return 'Ese email ya está registrado.';
+      if(code.includes('auth/weak-password')) return 'La contraseña es demasiado débil.';
+      if(code.includes('auth/too-many-requests')) return 'Demasiados intentos. Prueba más tarde.';
+      return 'Error de autenticación. Inténtalo de nuevo.';
+    }
+
+    // ==== App (calendario + reservas) ====
+    function initApp(){
+      // Calendario
+      if(!calendar){
+        const calEl = document.getElementById('calendar');
+        calendar = new FullCalendar.Calendar(calEl, {
+          initialView: 'dayGridMonth',
+          height: 'auto',
+          initialLocale: 'es',
+          headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+          events: fetchCalendarEvents,
+          eventDidMount: (info) => {
+            const isYours = info.event.extendedProps.uid === currentUser?.uid;
+            info.el.style.background = isYours ? 'rgba(52,199,89,.18)' : 'rgba(0,122,255,.18)';
+            info.el.style.borderColor = isYours ? 'rgba(52,199,89,.36)' : 'rgba(0,122,255,.36)';
+            info.el.style.color = '#111';
+          }
+        });
+        calendar.render();
+      } else {
+        calendar.refetchEvents();
+      }
+
+      // Fecha por defecto hoy y no permitir fechas pasadas
+      const dateInput = $('#date');
+      dateInput.value = todayISO();
+      dateInput.min = todayISO();
+      dateInput.addEventListener('change', updateSlotsUI);
+
+      // Crear chips de slots
+      const slotsEl = $('#slots');
+      slotsEl.innerHTML = '';
+      SLOT_STARTS.forEach(start => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip';
+        chip.dataset.start = start;
+        chip.textContent = formatSlotLabel(start);
+        chip.addEventListener('click', () => selectSlot(start));
+        slotsEl.appendChild(chip);
+      });
+
+      $('#btnBook').addEventListener('click', bookCurrentSelection);
+
+      // Escucha en tiempo real
+      reservationsRef = db.ref('reservations');
+      reservationsRef.on('value', snap => {
+        reservationsCache = snap.val() || {};
+        updateSlotsUI();
+        if(calendar) calendar.refetchEvents();
+        renderMyBookings();
+      });
+
+      updateSlotsUI();
+      renderMyBookings();
+    }
+
+    function teardownApp(){
+      if(reservationsRef){ reservationsRef.off(); reservationsRef = null; }
+      reservationsCache = {};
+      currentUser = null;
+      if(calendar){ calendar.destroy(); calendar = null; }
+      selectedSlot = null;
+    }
+
+    function selectSlot(start){
+      selectedSlot = start;
+      $$('#slots .chip').forEach(el => el.dataset.selected = (el.dataset.start === start) ? 'true' : 'false');
+      const date = $('#date').value;
+      $('#slotHelp').textContent = date ? `Seleccionado: ${date}, ${formatSlotLabel(start)}` : '';
+    }
+
+    function updateSlotsUI(){
+      const date = $('#date').value;
+      const day = reservationsCache[date] || {};
+      const userHasBookingThatDay = hasBookingForUserOnDate(currentUser?.uid, date);
+      $$('#slots .chip').forEach(chip => {
+        const start = chip.dataset.start;
+        const taken = !!(day && day[start]);
+        const disabledByLimit = userHasBookingThatDay && !(selectedSlot === start && !taken);
+        chip.setAttribute('aria-disabled', (taken || disabledByLimit) ? 'true' : 'false');
+        chip.disabled = taken || disabledByLimit;
+        if((taken || disabledByLimit) && selectedSlot === start){
+          selectedSlot = null;
+          chip.dataset.selected = 'false';
+        }
+      });
+
+      if(!selectedSlot){
+        const firstFree = $$('#slots .chip').find(c => !c.disabled);
+        if(firstFree){ selectSlot(firstFree.dataset.start); }
+        else{
+          const msg = userHasBookingThatDay
+            ? 'Ya tienes una reserva este día (límite: 1 por día).'
+            : 'No hay franjas disponibles en esta fecha.';
+          $('#slotHelp').textContent = msg;
+        }
+      }
+    }
+
+    function hasBookingForUserOnDate(uid, date){
+      if(!uid || !date) return false;
+      const slots = reservationsCache[date] || {};
+      return Object.values(slots).some(v => v && v.uid === uid);
+    }
+
+    async function bookCurrentSelection(){
+      const date = $('#date').value;
+      if(!date) return setBookMsg('Selecciona una fecha.', true);
+      if(!selectedSlot) return setBookMsg('Selecciona una franja horaria.', true);
+
+      if(hasBookingForUserOnDate(currentUser.uid, date)){
+        return setBookMsg('Límite alcanzado: 1 reserva por día.', true);
+      }
+
+      if(isSlotInPast(date, selectedSlot)){
+        return setBookMsg('No puedes reservar en el pasado.', true);
+      }
+
+      const slotKey = selectedSlot;
+      const dayRef = db.ref(`reservations/${date}/${slotKey}`);
+
+      try{
+        const res = await dayRef.transaction(current => {
+          if(current) return; // ya ocupado
+          return {
+            uid: currentUser.uid,
+            email: currentUser.email,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          };
+        });
+        if(res.committed === false || !res.snapshot.exists()){
+          setBookMsg('Esa franja se ocupó justo ahora. Prueba otra.', true);
+        }else{
+          setBookMsg('Reserva confirmada.');
+        }
+      }catch(e){
+        setBookMsg('No se pudo completar la reserva. Intenta de nuevo.', true);
+      }
+    }
+
+    function isSlotInPast(dateStr, startHHMM){
+      const now = new Date();
+      const [Y,M,D] = dateStr.split('-').map(Number);
+      const [h,m] = startHHMM.split(':').map(Number);
+      const slotStart = new Date(Y, M-1, D, h, m, 0, 0);
+      return slotStart.getTime() < now.getTime();
+    }
+
+    function setBookMsg(text, isError=false){
+      const el = $('#bookMsg');
+      el.textContent = text;
+      el.style.color = isError ? 'var(--danger)' : 'var(--ok)';
+      if(!isError){ setTimeout(() => el.textContent='', 3500); }
+    }
+
+    function renderMyBookings(){
+      const cont = $('#myBookings');
+      const mine = [];
+      Object.entries(reservationsCache).forEach(([date, slots]) => {
+        Object.entries(slots || {}).forEach(([start, data]) => {
+          if(data && data.uid === currentUser?.uid){
+            mine.push({date, start});
+          }
+        });
+      });
+      mine.sort((a,b) => (a.date+a.start).localeCompare(b.date+b.start));
+
+      if(mine.length === 0){
+        cont.className='list muted';
+        cont.textContent = 'No tienes reservas todavía.';
+        return;
+      }
+      cont.className='list';
+      cont.innerHTML = '';
+      mine.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        const label = document.createElement('div');
+        label.textContent = `${item.date} · ${formatSlotLabel(item.start)}`;
+        const btn = document.createElement('button');
+        btn.className='btn';
+        btn.textContent='Cancelar';
+        btn.addEventListener('click', () => cancelBooking(item.date, item.start));
+        row.appendChild(label);
+        row.appendChild(btn);
+        cont.appendChild(row);
+      });
+    }
+
+    async function cancelBooking(date, start){
+      const ref = db.ref(`reservations/${date}/${start}`);
+      const snap = await ref.get();
+      const val = snap.val();
+      if(!val) return;
+      if(val.uid !== currentUser.uid){
+        setBookMsg('Solo puedes cancelar tus propias reservas.', true);
+        return;
+      }
+      await ref.remove();
+      setBookMsg('Reserva cancelada.');
+    }
+
+    function fetchCalendarEvents(info, successCallback, failureCallback){
+      try{
+        const events = [];
+        const start = info.startStr.slice(0,10);
+        const end = info.endStr.slice(0,10);
+        const days = Object.keys(reservationsCache).filter(d => d >= start && d < end);
+        days.forEach(d => {
+          const slots = reservationsCache[d] || {};
+          Object.entries(slots).forEach(([startHHMM, data]) => {
+            if(!data) return;
+            const [hh,mm] = startHHMM.split(':').map(Number);
+            const endDate = new Date(d+'T00:00:00');
+            endDate.setHours(hh, mm+30, 0, 0);
+            events.push({
+              title: formatSlotLabel(startHHMM),
+              start: `${d}T${startHHMM}:00`,
+              end: `${d}T${pad2(endDate.getHours())}:${pad2(endDate.getMinutes())}:00`,
+              allDay: false,
+              extendedProps: { uid: data.uid }
+            });
+          });
+        });
+        successCallback(events);
+      }catch(e){
+        failureCallback(e);
+      }
+    }
+  </script>
+</body>
+</html>
