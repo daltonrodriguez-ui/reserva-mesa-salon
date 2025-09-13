@@ -2,369 +2,588 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pantalla de acceso</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Reserva Online Mesa Salón</title>
 
-  <!-- Lucide Icons CDN -->
-  <script defer src="https://unpkg.com/lucide@latest"></script>
-
+  <!-- Estilos -->
   <style>
-    :root {
-      --primary: #007aff;
-      --bg: #f6f7f9;
-      --text: #111827;
-      --muted: #6b7280;
-      --border: #d1d5db;
-      --danger: #ef4444;
-      --radius: 8px;
-      --panel-padding: 24px;
-      --vertical-gap: 32px;
+    :root{
+      --bg:#f6f7f9; --card:#ffffffcc; --text:#0b0c0e; --muted:#5b5f67;
+      --tint:#007aff; --ok:#34c759; --danger:#ff3b30;
+      --shadow:0 10px 30px rgba(0,0,0,.08); --radius:16px;
+      --glass:blur(20px) saturate(140%); --maxw:1100px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+      color:var(--text); background:linear-gradient(180deg,#fdfefe 0%,#f6f7f9 60%,#eef1f6 100%);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .wrap{max-width:var(--maxw); margin:0 auto; padding:16px}
+
+    /* Header */
+    header.app{
+      position:sticky; top:0; z-index:100;
+      backdrop-filter:var(--glass); background:rgba(255,255,255,.7);
+      border-bottom:1px solid rgba(0,0,0,.06);
+    }
+    .brand{display:flex; align-items:center; gap:12px; padding:12px 16px}
+    .brand .dot{width:12px; height:12px; border-radius:50%; background:var(--tint)}
+    .brand h1{margin:0; font-size:16px; font-weight:800; color:#1c1c1e}
+
+    /* Hero (título centrado vertical y horizontal) */
+    .hero{
+      width:100%; height:38vh; min-height:240px; max-height:440px;
+      position:relative; overflow:hidden; box-shadow:var(--shadow);
+    }
+    .hero img{width:100%; height:100%; object-fit:cover; display:block}
+    .hero .overlay{position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.4))}
+    .hero .title{
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      margin:0; color:#fff; text-shadow:0 8px 30px rgba(0,0,0,.35);
+      font-size:clamp(28px,6vw,56px); font-weight:800; text-align:center; padding:0 12px;
     }
 
-    *, *::before, *::after {
-      box-sizing: border-box;
+    /* Cards y layout */
+    .grid{display:grid; gap:16px; grid-template-columns:1fr}
+    @media (min-width: 900px){ .grid{grid-template-columns:1.2fr .8fr} }
+    .card{
+      background:var(--card); backdrop-filter:var(--glass);
+      border:1px solid rgba(0,0,0,.06); border-radius:var(--radius);
+      box-shadow:var(--shadow); padding:18px;
     }
+    .card h2{margin:0 0 12px 0; font-size:18px; font-weight:800}
+    .muted{color:var(--muted)}
+    .section{margin-top:18px}
+    .help{font-size:13px; color:var(--muted)}
 
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: var(--bg);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
+    /* Auth mínima */
+    .auth{min-height:100vh; display:grid; place-items:center; padding:24px}
+    .auth .panel{
+      width:min(92vw, 460px); background:var(--card);
+      border:1px solid rgba(0,0,0,.06); border-radius:20px; box-shadow:var(--shadow); padding:22px;
     }
+    .field{display:flex; flex-direction:column; gap:6px; margin-bottom:12px}
+    .field input{border:1px solid rgba(0,0,0,.12); border-radius:14px; padding:12px 14px; font-size:15px}
+    .actions{display:flex; gap:10px; flex-wrap:wrap}
+    .btn{border:none; border-radius:14px; padding:12px 16px; cursor:pointer; font-weight:700}
+    .btn.primary{background:var(--tint); color:#fff}
+    .btn.ghost{background:#fff; color:var(--tint); border:1px solid rgba(0,122,255,.3)}
+    .error{color:var(--danger)} .success{color:var(--ok)}
 
-    .panel {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-      padding: var(--panel-padding);
-      max-width: 384px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: var(--vertical-gap);
-    }
+    /* Slots */
+    .slots{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
+    .chip{border:1px solid rgba(0,0,0,.08); padding:10px 14px; border-radius:999px; cursor:pointer; background:#fff}
+    .chip[data-selected="true"]{background:var(--tint); color:#fff; border-color:transparent}
+    .chip[aria-disabled="true"]{opacity:.45; cursor:not-allowed; text-decoration:line-through}
 
-    .title {
-      margin: 0;
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: var(--text);
-    }
+    /* Calendar */
+    .fc{--fc-border-color: rgba(0,0,0,.06); --fc-page-bg-color: transparent; --fc-neutral-bg-color:#fff}
+    .fc .fc-toolbar-title{font-size:18px}
+    .fc .fc-button{background:#fff; color:#111; border:1px solid rgba(0,0,0,.12); border-radius:12px; padding:6px 10px}
+    .fc .fc-daygrid-event{border-radius:10px; padding:2px 6px}
 
-    .form-stack {
-      display: flex;
-      flex-direction: column;
-      gap: var(--vertical-gap);
-      width: 100%;
-    }
+    /* Lista reservas */
+    .list{display:flex; flex-direction:column; gap:10px}
+    .list .row{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1px solid rgba(0,0,0,.06); border-radius:12px; padding:10px 12px}
 
-    .field {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      width: 100%;
-    }
-
-    .field input {
-      width: 100%;
-      height: 34px;
-      padding: 0 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 0.95rem;
-      color: var(--text);
-      background: #fff;
-      transition: border-color .2s ease, box-shadow .2s ease;
-    }
-
-    .field input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
-    }
-
-    /* password field container */
-    .field.password-field {
-      position: relative;
-    }
-
-    .field.password-field input {
-      padding-right: 44px; /* espacio para el botón */
-    }
-
-    .toggle-password-btn {
-      position: absolute;
-      top: 50%;
-      right: 12px;
-      transform: translateY(-50%);
-      width: 28px;
-      height: 26px;
-      border: none;
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    .forgot-link {
-      position: absolute;
-      top: -18px;
-      right: 0;
-      font-size: 0.85rem;
-      color: var(--muted);
-      text-decoration: none;
-    }
-
-    .forgot-link:hover {
-      text-decoration: underline;
-    }
-
-    .btn {
-      width: 100%;
-      max-width: 384px;
-      height: 42px;
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 1rem;
-      font-weight: 800;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .btn:disabled {
-      background: #cbd5e1;
-      cursor: not-allowed;
-    }
-
-    .small-text {
-      font-size: 0.88rem;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .small-text a {
-      color: var(--primary);
-      text-decoration: none;
-    }
-
-    .small-text a:hover {
-      text-decoration: underline;
-    }
-
-    .password-rules {
-      display: none;
-      margin-top: 4px;
-      padding-left: 18px;
-      font-size: 0.9rem;
-      color: var(--text);
-    }
-
-    .password-rules li {
-      list-style-type: circle;
-      margin: 4px 0;
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      background: #fff;
-      border: 2px solid var(--danger);
-      color: var(--danger);
-      padding: 10px 14px;
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.15);
-      animation: fade-in 0.2s ease-out both;
-    }
-
-    @keyframes fade-in {
-      from { opacity: 0; transform: translateY(-8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    footer{display:none}
   </style>
+
+  <!-- FullCalendar -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales-all.global.min.js"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
 </head>
-
 <body>
-  <div class="panel">
-    <h1 class="title" id="formTitle">Accede a tu cuenta</h1>
 
-    <!-- Login Form -->
-    <div id="loginForm" class="form-stack">
-      <div class="field">
-        <input type="email" id="loginEmail" placeholder="Correo electrónico" autocomplete="email">
+  <!-- LOGIN -->
+  <section id="auth" class="auth">
+    <div class="panel">
+      <h1>Accede a tu cuenta</h1>
+      <p class="muted">Reserva la mesa del salón en tiempo real.</p>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" /></div>
+      <div class="field"><label for="password">Contraseña</label><input id="password" type="password" autocomplete="current-password" /></div>
+      <div class="actions">
+        <button id="btnLogin" class="btn primary" type="button">Entrar</button>
+        <button id="btnRegister" class="btn ghost" type="button">Crear cuenta</button>
+        <button id="btnReset" class="btn ghost" type="button">Restablecer contraseña</button>
       </div>
+      <div id="authMsg" class="section"></div>
+      <p class="help">Recuerda: debes verificar tu email para acceder.</p>
+    </div>
+  </section>
 
-      <div class="field">
-        <a href="#" class="forgot-link" id="forgotPasswordLink">¿Has olvidado tu contraseña?</a>
-        <input type="password" id="loginPassword" placeholder="Contraseña" autocomplete="current-password">
-      </div>
-
-      <button class="btn" id="loginBtn" type="button">Entrar</button>
-
-      <div class="small-text">
-        ¿No tienes una cuenta? <a href="#" id="showRegister">Regístrate ahora</a>
+  <!-- APP -->
+  <header class="app" id="appHeader" style="display:none">
+    <div class="brand wrap">
+      <div class="dot"></div>
+      <h1>RESERVA ONLINE MESA SALÓN</h1>
+      <div style="margin-left:auto; display:flex; gap:10px; align-items:center">
+        <span id="userEmail" class="muted" style="font-size:13px"></span>
+        <button id="btnLogout" class="btn" type="button">Salir</button>
       </div>
     </div>
+  </header>
 
-    <!-- Register Form -->
-    <div id="registerForm" class="form-stack" style="display:none">
-      <div class="field">
-        <input type="email" id="registerEmail" placeholder="Correo electrónico" autocomplete="email">
+  <main id="appMain" style="display:none">
+    <div class="hero">
+      <img src="img/mesa-salon.png" alt="Mesa del salón" />
+      <div class="overlay"></div>
+      <h2 class="title">RESERVA ONLINE MESA SALÓN</h2>
+    </div>
+
+    <div class="wrap section">
+      <div class="grid">
+        <div class="card">
+          <h2>Calendario de disponibilidad</h2>
+          <p class="help">Las reservas se reflejan en tiempo real.</p>
+          <div id="calendar" class="section"></div>
+        </div>
+
+        <div class="card">
+          <h2>Haz tu reserva</h2>
+          <p class="help">1) Elige fecha. 2) Selecciona franja de 30 min (09:00–22:30). 3) Confirma.</p>
+
+          <div class="section">
+            <div class="field">
+              <label for="date">Fecha</label>
+              <input id="date" type="date" />
+            </div>
+
+            <div class="field">
+              <label>Franja horaria</label>
+              <div id="slots" class="slots"></div>
+              <p id="slotHelp" class="help"></p>
+            </div>
+
+            <div class="actions">
+              <button id="btnBook" class="btn primary" type="button">Confirmar reserva</button>
+              <span id="bookMsg" class="help"></span>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Tus reservas</h2>
+            <div id="myBookings" class="list muted">No tienes reservas todavía.</div>
+          </div>
+        </div>
       </div>
 
-      <div class="field password-field">
-        <input type="password" id="registerPassword" placeholder="Contraseña" autocomplete="new-password">
-        <button class="toggle-password-btn" type="button" id="toggleRegisterPassword" aria-label="Mostrar u ocultar contraseña">
-          <i data-lucide="eye" width="14" height="14"></i>
-        </button>
-        <ul class="password-rules" id="passwordRules">
-          <li>Mínimo 8 caracteres</li>
-          <li>Al menos una mayúscula</li>
-          <li>Al menos un número</li>
-          <li>Al menos un símbolo</li>
-        </ul>
-      </div>
-
-      <button class="btn" id="createAccountBtn" type="button" disabled>Crear cuenta</button>
-
-      <div class="small-text">
-        ¿Ya tienes una cuenta? <a href="#" id="showLogin">Inicia sesión ahora</a>
+      <div class="card section">
+        <h2>Nota de privacidad</h2>
+        <p class="help">Tus datos personales no se muestran a otros usuarios. En la base de datos solo se guarda tu UID y la fecha/hora de la reserva.</p>
       </div>
     </div>
-  </div>
+  </main>
+
+  <footer></footer>
 
   <script>
-    // iniciar Lucide Icons
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.lucide) lucide.createIcons();
-    });
+    // Configuración Firebase (tu proyecto)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCz5J2CoPNeLZ5k79b_Nae8gxSGF8G4R4Q",
+      authDomain: "reservamesasalon.firebaseapp.com",
+      databaseURL: "https://reservamesasalon-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "reservamesasalon",
+      storageBucket: "reservamesasalon.firebasestorage.app",
+      messagingSenderId: "730231578561",
+      appId: "1:730231578561:web:cbdef71bda17af70721940",
+      measurementId: "G-KVP01MM9RZ"
+    };
+    firebase.initializeApp(firebaseConfig);
 
-    // Elementos
-    const formTitle = document.getElementById('formTitle');
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    const showRegister = document.getElementById('showRegister');
-    const showLogin = document.getElementById('showLogin');
+    // App Check (reCAPTCHA v3) — PON AQUÍ TU CLAVE DE SITIO REAL
+    const appCheck = firebase.appCheck();
+    appCheck.activate('6LdgPccrAAAAAJcAjHI_5JBiBzScVQuhWLayHSLw', true);
 
-    const loginEmail = document.getElementById('loginEmail');
-    const loginPassword = document.getElementById('loginPassword');
-    const loginBtn = document.getElementById('loginBtn');
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-    const registerEmail = document.getElementById('registerEmail');
-    const registerPassword = document.getElementById('registerPassword');
-    const toggleRegisterPasswordBtn = document.getElementById('toggleRegisterPassword');
-    const passwordRules = document.getElementById('passwordRules');
-    const createAccountBtn = document.getElementById('createAccountBtn');
+    // Utils
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const pad2 = n => String(n).padStart(2,'0');
+    const todayISO = () => new Date().toISOString().slice(0,10);
+    const addDaysISO = (iso, days) => {
+      const d = new Date(iso); d.setDate(d.getDate()+days); return d.toISOString().slice(0,10);
+    };
 
-    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
-
-    // Alternar vistas
-    showRegister.addEventListener('click', e => {
-      e.preventDefault();
-      formTitle.textContent = 'Crea una nueva cuenta';
-      loginForm.style.display = 'none';
-      registerForm.style.display = 'flex';
-      if (window.lucide) lucide.createIcons();
-    });
-
-    showLogin.addEventListener('click', e => {
-      e.preventDefault();
-      formTitle.textContent = 'Accede a tu cuenta';
-      registerForm.style.display = 'none';
-      loginForm.style.display = 'flex';
-    });
-
-    // Toggle contraseña
-    toggleRegisterPasswordBtn.addEventListener('click', () => {
-      const isPwd = registerPassword.type === 'password';
-      registerPassword.type = isPwd ? 'text' : 'password';
-      const icon = toggleRegisterPasswordBtn.querySelector('i');
-      icon.setAttribute('data-lucide', isPwd ? 'eye-off' : 'eye');
-      if (window.lucide) lucide.createIcons();
-    });
-
-    // Mostrar reglas de contraseña
-    registerPassword.addEventListener('focus', () => {
-      passwordRules.style.display = 'block';
-    });
-    registerPassword.addEventListener('blur', () => {
-      if (!registerPassword.value) passwordRules.style.display = 'none';
-    });
-
-    // Validación contraseña
-    function isValidPassword(pwd) {
-      return pwd.length >= 8 &&
-        /[A-Z]/.test(pwd) &&
-        /\d/.test(pwd) &&
-        /[^A-Za-z0-9]/.test(pwd);
+    // Generar franjas 09:00–22:30 (intervalos de 30 min)
+    const SLOT_STARTS = [];
+    for(let h=9; h<=22; h++){
+      for(let m=0; m<60; m+=30){
+        if(h===22 && m>0) break; // 22:00 es la última franja de 30'
+        SLOT_STARTS.push(`${pad2(h)}:${pad2(m)}`);
+      }
+    }
+    function formatSlotLabel(start){
+      const [h,m] = start.split(':').map(Number);
+      const end = new Date(0,0,0,h,m+30);
+      return `${start}–${pad2(end.getHours())}:${pad2(end.getMinutes())}`;
+    }
+    function isSlotInPast(dateStr, startHHMM){
+      const now = new Date();
+      const [Y,M,D] = dateStr.split('-').map(Number);
+      const [h,m] = startHHMM.split(':').map(Number);
+      const slotStart = new Date(Y, M-1, D, h, m, 0, 0);
+      return slotStart.getTime() < now.getTime();
     }
 
-    function updateCreateAccountButton() {
-      const emailFilled = registerEmail.value.trim().length > 0;
-      const pwdValid = isValidPassword(registerPassword.value);
-      createAccountBtn.disabled = !(emailFilled && pwdValid);
-    }
-    registerEmail.addEventListener('input', updateCreateAccountButton);
-    registerPassword.addEventListener('input', updateCreateAccountButton);
+    // Estado
+    let currentUser = null;
+    let reservationsCache = {}; // { "YYYY-MM-DD": { "HH:MM": { uid, createdAt } } }
+    let calendar = null;
+    let reservationsRef = null;
+    let selectedSlot = null;
 
-    // Toast
-    function showToast(text, type = 'error') {
-      document.querySelectorAll('.toast').forEach(t => t.remove());
-      const t = document.createElement('div');
-      t.className = 'toast';
-      const icon = document.createElement('i');
-      icon.setAttribute('data-lucide', type === 'error' ? 'alert-triangle' : 'info');
-      icon.setAttribute('width', '18');
-      icon.setAttribute('height', '18');
-      const span = document.createElement('span');
-      span.textContent = text;
-      t.append(icon, span);
-      document.body.append(t);
-      if (window.lucide) lucide.createIcons();
-      setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-8px)'; }, 2600);
-      setTimeout(() => t.remove(), 3000);
+    // Auth UI
+    $('#btnLogin').addEventListener('click', async () => {
+      const email = $('#email').value.trim();
+      const pass = $('#password').value;
+      setAuthMsg('');
+      try{
+        const cred = await auth.signInWithEmailAndPassword(email, pass);
+        if(!cred.user.emailVerified){
+          await auth.signOut();
+          setAuthMsg('Debes verificar tu email antes de entrar. Revisa tu bandeja o solicita reenvío desde tu cuenta.', true);
+        }
+      }catch(e){ setAuthMsg(mapAuthError(e), true); }
+    });
+    $('#btnRegister').addEventListener('click', async () => {
+      const email = $('#email').value.trim();
+      const pass = $('#password').value;
+      if(pass.length < 8){ setAuthMsg('La contraseña debe tener al menos 8 caracteres.', true); return; }
+      try{
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        await cred.user.sendEmailVerification();
+        await auth.signOut();
+        setAuthMsg('Cuenta creada. Te enviamos un email de verificación. Verifica para poder acceder.', false);
+      }catch(e){ setAuthMsg(mapAuthError(e), true); }
+    });
+    $('#btnReset').addEventListener('click', async () => {
+      const email = $('#email').value.trim();
+      if(!email){ setAuthMsg('Introduce tu email para enviarte el enlace de restablecimiento.', true); return; }
+      try{ await auth.sendPasswordResetEmail(email); setAuthMsg('Te hemos enviado un email para restablecer la contraseña.'); }
+      catch(e){ setAuthMsg(mapAuthError(e), true); }
+    });
+    $('#btnLogout').addEventListener('click', () => auth.signOut());
+
+    function setAuthMsg(text, isError=false){
+      const el = $('#authMsg');
+      el.textContent = text;
+      el.className = isError ? 'error' : 'success';
+    }
+    function mapAuthError(e){
+      const code = e?.code || '';
+      if(code.includes('invalid-email')) return 'Email inválido.';
+      if(code.includes('user-not-found')) return 'No existe una cuenta con ese email.';
+      if(code.includes('wrong-password')) return 'Contraseña incorrecta.';
+      if(code.includes('email-already-in-use')) return 'Ese email ya está registrado.';
+      if(code.includes('weak-password')) return 'La contraseña es demasiado débil.';
+      if(code.includes('too-many-requests')) return 'Demasiados intentos. Prueba más tarde.';
+      return 'Error de autenticación. Inténtalo de nuevo.';
     }
 
-    // Simulación de login
-    loginBtn.addEventListener('click', () => {
-      const email = loginEmail.value.trim();
-      const pwd = loginPassword.value;
-      if (!email || !pwd) {
-        showToast('Usuario o contraseña incorrectos', 'error');
+    auth.onAuthStateChanged(user => {
+      if(user && user.emailVerified){
+        currentUser = user;
+        $('#userEmail').textContent = user.email || '';
+        $('#auth').style.display = 'none';
+        $('#appHeader').style.display = 'block';
+        $('#appMain').style.display = 'block';
+        initApp();
+      }else{
+        teardownApp();
+        $('#auth').style.display = 'grid';
+        $('#appHeader').style.display = 'none';
+        $('#appMain').style.display = 'none';
+      }
+    });
+
+    // App
+    function initApp(){
+      // Calendario
+      if(!calendar){
+        const calEl = $('#calendar');
+        calendar = new FullCalendar.Calendar(calEl, {
+          initialView: 'dayGridMonth',
+          height: 'auto',
+          initialLocale: 'es',
+          headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+          events: fetchCalendarEvents,
+          eventDidMount: (info) => {
+            const isYours = info.event.extendedProps.uid === currentUser?.uid;
+            info.el.style.background = isYours ? 'rgba(52,199,89,.18)' : 'rgba(0,122,255,.18)';
+            info.el.style.borderColor = isYours ? 'rgba(52,199,89,.36)' : 'rgba(0,122,255,.36)';
+            info.el.style.color = '#111';
+          }
+        });
+        calendar.render();
+      }else{
+        calendar.refetchEvents();
+      }
+
+      // Fecha por defecto hoy; limita a 30 días vista
+      const dateInput = $('#date');
+      const today = todayISO();
+      dateInput.value = today;
+      dateInput.min = today;
+      dateInput.max = addDaysISO(today, 30);
+      dateInput.addEventListener('change', updateSlotsUI);
+
+      // Crear chips de slots
+      const slotsEl = $('#slots');
+      slotsEl.innerHTML = '';
+      SLOT_STARTS.forEach(start => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip';
+        chip.dataset.start = start;
+        chip.textContent = formatSlotLabel(start);
+        chip.addEventListener('click', () => selectSlot(start));
+        slotsEl.appendChild(chip);
+      });
+
+      $('#btnBook').addEventListener('click', bookCurrentSelection);
+
+      // Escucha reservas en tiempo real
+      reservationsRef = db.ref('reservations');
+      reservationsRef.on('value', snap => {
+        reservationsCache = snap.val() || {};
+        updateSlotsUI();
+        if(calendar) calendar.refetchEvents();
+        renderMyBookings();
+      });
+
+      updateSlotsUI();
+      renderMyBookings();
+    }
+
+    function teardownApp(){
+      if(reservationsRef){ reservationsRef.off(); reservationsRef = null; }
+      reservationsCache = {};
+      currentUser = null;
+      selectedSlot = null;
+      if(calendar){ calendar.destroy(); calendar = null; }
+    }
+
+    function selectSlot(start){
+      selectedSlot = start;
+      $$('#slots .chip').forEach(el => el.dataset.selected = (el.dataset.start === start) ? 'true' : 'false');
+      const date = $('#date').value;
+      $('#slotHelp').textContent = date ? `Seleccionado: ${date}, ${formatSlotLabel(start)}` : '';
+    }
+
+    function hasBookingForUserOnDate(uid, date){
+      if(!uid || !date) return false;
+      const slots = reservationsCache[date] || {};
+      return Object.values(slots).some(v => v && v.uid === uid);
+    }
+
+    function updateSlotsUI(){
+      const date = $('#date').value;
+      const day = reservationsCache[date] || {};
+      const userHasBookingThatDay = hasBookingForUserOnDate(currentUser?.uid, date);
+
+      $$('#slots .chip').forEach(chip => {
+        const start = chip.dataset.start;
+        const taken = !!(day && day[start]);
+        const disabledLimit = userHasBookingThatDay && !(selectedSlot === start && !taken);
+        const disabledPast = isSlotInPast(date, start);
+        const disabled = taken || disabledLimit || disabledPast;
+        chip.disabled = disabled;
+        chip.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+        if(disabled && selectedSlot === start){ selectedSlot = null; chip.dataset.selected = 'false'; }
+      });
+
+      if(!selectedSlot){
+        const firstFree = $$('#slots .chip').find(c => !c.disabled);
+        if(firstFree){ selectSlot(firstFree.dataset.start); }
+        else{
+          const msg = userHasBookingThatDay
+            ? 'Ya tienes una reserva este día (límite: 1 por día).'
+            : 'No hay franjas disponibles en esta fecha.';
+          $('#slotHelp').textContent = msg;
+        }
+      }
+    }
+
+    async function bookCurrentSelection(){
+      const date = $('#date').value;
+      if(!date){ return setBookMsg('Selecciona una fecha.', true); }
+      if(!selectedSlot){ return setBookMsg('Selecciona una franja horaria.', true); }
+      if(isSlotInPast(date, selectedSlot)){ return setBookMsg('No puedes reservar en el pasado.', true); }
+
+      // Límite por día (refuerzo UI; el bloqueo real va en reglas)
+      if(hasBookingForUserOnDate(currentUser.uid, date)){
+        return setBookMsg('Límite alcanzado: 1 reserva por día.', true);
+      }
+
+      const updates = {};
+      updates[`reservations/${date}/${selectedSlot}`] = {
+        uid: currentUser.uid,
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+      };
+      updates[`userDates/${currentUser.uid}/${date}`] = true;
+
+      try{
+        await db.ref().update(updates); // actualización multi-ubicación (atómica)
+        setBookMsg('Reserva confirmada.');
+      }catch(e){
+        // Si las reglas bloquean por conflicto, caerá aquí
+        setBookMsg('No se pudo completar la reserva (posible conflicto). Prueba otra franja.', true);
+      }
+    }
+
+    async function cancelBooking(date, start){
+      // Como el límite es 1 por día, al cancelar eliminamos también el índice userDates
+      const updates = {};
+      updates[`reservations/${date}/${start}`] = null;
+      updates[`userDates/${currentUser.uid}/${date}`] = null;
+      try{
+        await db.ref().update(updates);
+        setBookMsg('Reserva cancelada.');
+      }catch(e){
+        setBookMsg('No se pudo cancelar. Intenta de nuevo.', true);
+      }
+    }
+
+    function setBookMsg(text, isError=false){
+      const el = $('#bookMsg');
+      el.textContent = text;
+      el.style.color = isError ? 'var(--danger)' : 'var(--ok)';
+      if(!isError){ setTimeout(()=>{ el.textContent=''; }, 3000); }
+    }
+
+    function renderMyBookings(){
+      const cont = $('#myBookings');
+      const mine = [];
+      Object.entries(reservationsCache).forEach(([date, slots]) => {
+        Object.entries(slots || {}).forEach(([start, data]) => {
+          if(data && data.uid === currentUser?.uid){
+            mine.push({date, start});
+          }
+        });
+      });
+      mine.sort((a,b) => (a.date+a.start).localeCompare(b.date+b.start));
+
+      if(mine.length===0){
+        cont.className='list muted';
+        cont.textContent='No tienes reservas todavía.';
         return;
       }
-      showToast('Usuario o contraseña incorrectos', 'error');
+
+      cont.className='list';
+      cont.innerHTML='';
+      mine.forEach(item=>{
+        const row = document.createElement('div');
+        row.className='row';
+        const label = document.createElement('div');
+        label.textContent = `${item.date} · ${formatSlotLabel(item.start)} — Reservado`;
+        const btn = document.createElement('button');
+        btn.className='btn';
+        btn.textContent='Cancelar';
+        btn.addEventListener('click', ()=>cancelBooking(item.date, item.start));
+        row.appendChild(label); row.appendChild(btn);
+        cont.appendChild(row);
+      });
+    }
+
+    function fetchCalendarEvents(info, successCallback, failureCallback){
+      try{
+        const events = [];
+        const start = info.startStr.slice(0,10);
+        const end = info.endStr.slice(0,10);
+        const days = Object.keys(reservationsCache).filter(d => d >= start && d < end);
+        days.forEach(d => {
+          const slots = reservationsCache[d] || {};
+          Object.entries(slots).forEach(([startHHMM, data]) => {
+            if(!data) return;
+            const [hh,mm] = startHHMM.split(':').map(Number);
+            const endDate = new Date(d+'T00:00:00'); endDate.setHours(hh, mm+30, 0, 0);
+            events.push({
+              title: `Reservado · ${formatSlotLabel(startHHMM)}`,
+              start: `${d}T${startHHMM}:00`,
+              end: `${d}T${pad2(endDate.getHours())}:${pad2(endDate.getMinutes())}:00`,
+              allDay: false,
+              extendedProps: { uid: data.uid }
+            });
+          });
+        });
+        successCallback(events);
+      }catch(e){ failureCallback(e); }
+    }
+
+    // Inicializar listeners de UI una sola vez
+    document.addEventListener('DOMContentLoaded', ()=>{
+      // Preconstruir chips (en caso de que el auth ya esté ok)
+      const slotsEl = $('#slots');
+      if(slotsEl && slotsEl.children.length===0){
+        SLOT_STARTS.forEach(start => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'chip';
+          chip.dataset.start = start;
+          chip.textContent = formatSlotLabel(start);
+          chip.addEventListener('click', () => selectSlot(start));
+          slotsEl.appendChild(chip);
+        });
+      }
+      const dateInput = $('#date');
+      if(dateInput){
+        const today = todayISO();
+        dateInput.value = today;
+        dateInput.min = today;
+        dateInput.max = addDaysISO(today, 30);
+        dateInput.addEventListener('change', updateSlotsUI);
+      }
+      const btnBook = $('#btnBook');
+      if(btnBook){ btnBook.addEventListener('click', bookCurrentSelection); }
     });
 
-    // Simulación de registro
-    createAccountBtn.addEventListener('click', () => {
-      if (createAccountBtn.disabled) return;
-      showToast('Cuenta creada (demo). Implementa lógica real.', 'info');
-    });
+    /*
+      IMPORTANTE (Reglas Realtime Database sugeridas):
 
-    // Recuperar contraseña (modal)
-    forgotPasswordLink.addEventListener('click', e => {
-      e.preventDefault();
-      showToast('Función de recuperar contraseña aún no implementada.', 'info');
-    });
+      {
+        "rules": {
+          "reservations": {
+            ".read": "auth != null && auth.token.email_verified === true",
+            "$date": {
+              "$slot": {
+                // Crear o borrar solo por el dueño, y si no existe en userDates
+                ".write": "auth != null && auth.token.email_verified === true && (
+                  // Crear: si no existe aún y no hay índice del día
+                  (!data.exists() && !root.child('userDates').child(auth.uid).child($date).exists() && newData.child('uid').val() === auth.uid) ||
+                  // Borrar: solo el dueño
+                  (data.exists() && data.child('uid').val() === auth.uid && !newData.exists())
+                )",
+                ".validate": "newData.exists() ? (newData.hasChildren(['uid','createdAt']) && newData.child('uid').val() === auth.uid) : true"
+              }
+            }
+          },
+          "userDates": {
+            "$uid": {
+              "$date": {
+                // Índice por usuario y fecha: solo crear si no existe; borrar permitido para el propio usuario
+                ".write": "auth != null && auth.uid === $uid && (!data.exists() && newData.val() === true || (data.exists() && !newData.exists()))",
+                ".validate": "newData.val() === true"
+              }
+            }
+          }
+        }
+      }
+
+      Añade además App Check en Firebase Console (App Check → habilitar reCAPTCHA v3) y usa tu clave real.
+      Para cabeceras de seguridad (CSP, HSTS, etc.) crea un archivo _headers en Netlify (fuera de este HTML).
+    */
   </script>
 </body>
 </html>
