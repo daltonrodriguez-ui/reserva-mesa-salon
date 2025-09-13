@@ -89,23 +89,29 @@
       box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
     }
 
-    /* Para el campo de contraseña con botón dentro */
-    .with-toggle {
-      padding-right: 44px;
+    /* password field container */
+    .field.password-field {
+      position: relative;
+    }
+
+    .field.password-field input {
+      padding-right: 44px; /* espacio para el botón */
     }
 
     .toggle-password-btn {
       position: absolute;
-      top: 0;
-      right: 0;
-      width: 44px;
-      height: 100%;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 26px;
       border: none;
       background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      padding: 0;
     }
 
     .forgot-link {
@@ -193,48 +199,6 @@
       from { opacity: 0; transform: translateY(-8px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-
-    /* Modal recuperar contraseña */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-    }
-
-    .modal {
-      background: #fff;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      padding: 20px;
-      max-width: 420px;
-      width: 92vw;
-      display: flex;
-      flex-direction: column;
-      gap: var(--vertical-gap);
-      box-shadow: 0 20px 48px rgba(0,0,0,0.2);
-    }
-
-    .modal .title {
-      margin: 0 0 8px 0;
-      font-size: 1.1rem;
-      color: var(--text);
-    }
-
-    .modal .actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .btn.ghost {
-      background: #fff;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
   </style>
 </head>
 
@@ -247,14 +211,16 @@
       <div class="field">
         <input type="email" id="loginEmail" placeholder="Correo electrónico" autocomplete="email">
       </div>
+
       <div class="field">
         <a href="#" class="forgot-link" id="forgotPasswordLink">¿Has olvidado tu contraseña?</a>
         <input type="password" id="loginPassword" placeholder="Contraseña" autocomplete="current-password">
       </div>
-      <button class="btn" id="loginBtn">Entrar</button>
+
+      <button class="btn" id="loginBtn" type="button">Entrar</button>
+
       <div class="small-text">
-        ¿No tienes una cuenta?
-        <a href="#" id="showRegister">Regístrate ahora</a>
+        ¿No tienes una cuenta? <a href="#" id="showRegister">Regístrate ahora</a>
       </div>
     </div>
 
@@ -263,9 +229,10 @@
       <div class="field">
         <input type="email" id="registerEmail" placeholder="Correo electrónico" autocomplete="email">
       </div>
-      <div class="field">
-        <input type="password" id="registerPassword" class="with-toggle" placeholder="Contraseña" autocomplete="new-password">
-        <button class="toggle-password-btn" type="button" id="togglePasswordBtn" aria-label="Mostrar u ocultar contraseña">
+
+      <div class="field password-field">
+        <input type="password" id="registerPassword" placeholder="Contraseña" autocomplete="new-password">
+        <button class="toggle-password-btn" type="button" id="toggleRegisterPassword" aria-label="Mostrar u ocultar contraseña">
           <i data-lucide="eye" width="14" height="14"></i>
         </button>
         <ul class="password-rules" id="passwordRules">
@@ -275,32 +242,17 @@
           <li>Al menos un símbolo</li>
         </ul>
       </div>
-      <button class="btn" id="createAccountBtn" disabled>Crear cuenta</button>
-      <div class="small-text">
-        ¿Ya tienes una cuenta?
-        <a href="#" id="showLogin">Inicia sesión ahora</a>
-      </div>
-    </div>
-  </div>
 
-  <!-- Modal Recuperar Contraseña -->
-  <div class="modal-backdrop" id="resetModal">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
-      <h2 class="title" id="resetTitle">Recuperar contraseña</h2>
-      <p style="margin:0; color:var(--text); font-size:0.95rem;">
-        Introduce tu correo y te enviaremos instrucciones.
-      </p>
-      <div class="field">
-        <input type="email" id="resetEmail" placeholder="Correo electrónico" autocomplete="email">
-      </div>
-      <div class="actions">
-        <button class="btn ghost" id="cancelReset" type="button">Cancelar</button>
-        <button class="btn" id="sendReset" type="button">Enviar</button>
+      <button class="btn" id="createAccountBtn" type="button" disabled>Crear cuenta</button>
+
+      <div class="small-text">
+        ¿Ya tienes una cuenta? <a href="#" id="showLogin">Inicia sesión ahora</a>
       </div>
     </div>
   </div>
 
   <script>
+    // iniciar Lucide Icons
     document.addEventListener('DOMContentLoaded', () => {
       if (window.lucide) lucide.createIcons();
     });
@@ -318,17 +270,13 @@
 
     const registerEmail = document.getElementById('registerEmail');
     const registerPassword = document.getElementById('registerPassword');
-    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const toggleRegisterPasswordBtn = document.getElementById('toggleRegisterPassword');
     const passwordRules = document.getElementById('passwordRules');
     const createAccountBtn = document.getElementById('createAccountBtn');
 
     const forgotPasswordLink = document.getElementById('forgotPasswordLink');
-    const resetModal = document.getElementById('resetModal');
-    const cancelReset = document.getElementById('cancelReset');
-    const sendReset = document.getElementById('sendReset');
-    const resetEmail = document.getElementById('resetEmail');
 
-    // Cambiar a registro
+    // Alternar vistas
     showRegister.addEventListener('click', e => {
       e.preventDefault();
       formTitle.textContent = 'Crea una nueva cuenta';
@@ -337,7 +285,6 @@
       if (window.lucide) lucide.createIcons();
     });
 
-    // Volver a login
     showLogin.addEventListener('click', e => {
       e.preventDefault();
       formTitle.textContent = 'Accede a tu cuenta';
@@ -345,16 +292,16 @@
       loginForm.style.display = 'flex';
     });
 
-    // Toggle Password en registro
-    togglePasswordBtn.addEventListener('click', () => {
+    // Toggle contraseña
+    toggleRegisterPasswordBtn.addEventListener('click', () => {
       const isPwd = registerPassword.type === 'password';
       registerPassword.type = isPwd ? 'text' : 'password';
-      const icon = togglePasswordBtn.querySelector('i');
+      const icon = toggleRegisterPasswordBtn.querySelector('i');
       icon.setAttribute('data-lucide', isPwd ? 'eye-off' : 'eye');
       if (window.lucide) lucide.createIcons();
     });
 
-    // Reglas de contraseña
+    // Mostrar reglas de contraseña
     registerPassword.addEventListener('focus', () => {
       passwordRules.style.display = 'block';
     });
@@ -362,36 +309,21 @@
       if (!registerPassword.value) passwordRules.style.display = 'none';
     });
 
+    // Validación contraseña
     function isValidPassword(pwd) {
       return pwd.length >= 8 &&
-             /[A-Z]/.test(pwd) &&
-             /\d/.test(pwd) &&
-             /[^A-Za-z0-9]/.test(pwd);
+        /[A-Z]/.test(pwd) &&
+        /\d/.test(pwd) &&
+        /[^A-Za-z0-9]/.test(pwd);
     }
 
-    function updateCreateButtonState() {
-      createAccountBtn.disabled = !(registerEmail.value.trim() && isValidPassword(registerPassword.value));
+    function updateCreateAccountButton() {
+      const emailFilled = registerEmail.value.trim().length > 0;
+      const pwdValid = isValidPassword(registerPassword.value);
+      createAccountBtn.disabled = !(emailFilled && pwdValid);
     }
-
-    registerEmail.addEventListener('input', updateCreateButtonState);
-    registerPassword.addEventListener('input', updateCreateButtonState);
-
-    // Modal reset
-    forgotPasswordLink.addEventListener('click', e => {
-      e.preventDefault();
-      resetModal.style.display = 'flex';
-      resetEmail.focus();
-    });
-    cancelReset.addEventListener('click', () => {
-      resetModal.style.display = 'none';
-      resetEmail.value = '';
-    });
-    resetModal.addEventListener('click', e => {
-      if (e.target === resetModal) {
-        resetModal.style.display = 'none';
-        resetEmail.value = '';
-      }
-    });
+    registerEmail.addEventListener('input', updateCreateAccountButton);
+    registerPassword.addEventListener('input', updateCreateAccountButton);
 
     // Toast
     function showToast(text, type = 'error') {
@@ -411,18 +343,7 @@
       setTimeout(() => t.remove(), 3000);
     }
 
-    // Simula envío de reset
-    sendReset.addEventListener('click', () => {
-      const email = resetEmail.value.trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showToast('Introduce un correo válido', 'error');
-        return;
-      }
-      resetModal.style.display = 'none';
-      showToast('Instrucciones enviadas a tu correo', 'info');
-    });
-
-    // Simula login
+    // Simulación de login
     loginBtn.addEventListener('click', () => {
       const email = loginEmail.value.trim();
       const pwd = loginPassword.value;
@@ -433,10 +354,16 @@
       showToast('Usuario o contraseña incorrectos', 'error');
     });
 
-    // Simula registro
+    // Simulación de registro
     createAccountBtn.addEventListener('click', () => {
       if (createAccountBtn.disabled) return;
       showToast('Cuenta creada (demo). Implementa lógica real.', 'info');
+    });
+
+    // Recuperar contraseña (modal)
+    forgotPasswordLink.addEventListener('click', e => {
+      e.preventDefault();
+      showToast('Función de recuperar contraseña aún no implementada.', 'info');
     });
   </script>
 </body>
